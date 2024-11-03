@@ -32,11 +32,6 @@
         <string>Completed</string>
        </property>
       </column>
-      <item>
-       <property name="text">
-        <string>First</string>
-       </property>
-      </item>
      </widget>
     </item>
     <item>
