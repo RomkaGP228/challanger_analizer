@@ -16,6 +16,7 @@ def add_new_db():
        datefrom TEXT,
        dateto TEXT,
        duration TEXT,
+       completed TEXT,
        info TEXT);
     ''')
     cursor.execute('CREATE INDEX IF NOT EXISTS challenge_index ON challenges (challenge_lable)')
@@ -23,7 +24,7 @@ def add_new_db():
     connection.close()
 
 
-def add_new_one_challenge_func(title, duration, self, complited=0):
+def add_new_one_challenge_func(title, duration, self, complited='0'):
     # подключение БД
     path = PurePath('db/challenges.db')
     connection = sqlite3.connect(path)
@@ -67,8 +68,8 @@ def add_new_one_challenge_func(title, duration, self, complited=0):
         json.dump(competed, new_json)
 
     # Добавляем нового пользователя
-    cursor.execute('INSERT INTO challenges (challenge_lable, datefrom, dateto, duration, info) VALUES (?, ?, ?, ?, ?)',
-                   (title, day_today, day_of_the_end, duration, f'{title}.json'))
+    cursor.execute('INSERT INTO challenges (challenge_lable, datefrom, dateto, duration, completed, info) VALUES (?, ?, ?, ?, ?, ?)',
+                   (title, day_today, day_of_the_end, duration, complited, f'{title}.json'))
 
     # Сохраняем изменения и закрываем соединение
     connection.commit()

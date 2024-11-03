@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import QMainWindow, QDialog, QTreeWidgetItem
 import data.functions as funcs
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QMessageBox
+import json
 
 
 class main_window_class(QMainWindow):
@@ -18,7 +19,7 @@ class main_window_class(QMainWindow):
         self.dayswindow_class_ex = dayswindow_class_ex
 
         # тут идет подключение кнопок
-        self.treeWidget.clicked.connect(self.run)
+        self.treeWidget.itemClicked.connect(self.run)
         self.Add_new_one.clicked.connect(self.create_new_one)
 
         # добавление в sql таблицу
@@ -28,7 +29,7 @@ class main_window_class(QMainWindow):
         path = PurePath('db/challenges.db')
         connection = sqlite3.connect(path)
         cursor = connection.cursor()
-        cursor.execute('SELECT challenge_lable, duration FROM challenges')
+        cursor.execute('SELECT challenge_lable, duration, completed FROM challenges')
         for i in cursor.fetchall():
             res = QTreeWidgetItem(i)
             self.treeWidget.insertTopLevelItem(0, res)
@@ -38,8 +39,8 @@ class main_window_class(QMainWindow):
         msg_box.setWindowTitle(title)
         msg_box.setText(message)
 
-    def run(self):
-        self.dayswindow_class_ex.show()
+    def run(self, item, column):
+        self.dayswindow_class_ex.open_info(item.text(0), column)
 
     def create_new_one(self):
         self.add_new_one_class_ex.new_challenge_added.connect(self.updater)  # Подключение сигнала
@@ -54,6 +55,30 @@ class dayswindow_class(QMainWindow):
     def __init__(self):
         super().__init__()
         uic.loadUi('forms/days_challenger.ui', self)
+        self.treeWidget.clicked.connect(self.open_info)
+
+    def open_info(self, item, column):
+        self.load_info_about_challenge(item, column)
+
+    def load_info_about_challenge(self, name, column):
+        path = PurePath(f'data/json_files/{name}.json')
+        with open(path, mode='r') as in_json_f:
+            self.show()
+            json_data_about_challenge = [json.load(in_json_f)]
+            for i in json_data_about_challenge:
+                for k, v in i.items():
+                    info_about_class = [k]
+                    info_about_class.extend(v)
+                    res = QTreeWidgetItem(info_about_class)
+                    self.treeWidget.insertTopLevelItem(0, res)
+
+    def cleaning(self):
+        self.treeWidget.clear()
+
+
+
+
+
 
 
 class add_new_one_class(QDialog):
