@@ -1,8 +1,7 @@
-import sys
 import sqlite3
 from pathlib import PurePath
 from PyQt6 import uic
-from PyQt6.QtWidgets import QMainWindow, QDialog, QTreeWidgetItem
+from PyQt6.QtWidgets import QMainWindow, QDialog, QTreeWidgetItem, QTableWidgetItem
 import data.functions as funcs
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QMessageBox
@@ -10,25 +9,26 @@ import json
 
 
 class main_window_class(QMainWindow):
-    def __init__(self, add_new_one_class_ex, dayswindow_class_ex):
+    def __init__(self, add_new_one_class_ex):
         super().__init__()
         uic.loadUi('forms/start_window_challenger.ui', self)
 
         # тут идет инициализация созданных клонов методов классов
         self.add_new_one_class_ex = add_new_one_class_ex
-        self.dayswindow_class_ex = dayswindow_class_ex
+
+        self.connection = sqlite3.connect(PurePath('db/challenges.db'))
 
         # тут идет подключение кнопок
-        self.treeWidget.itemClicked.connect(self.run)
+        self.treeWidget.itemDoubleClicked.connect(self.show_info_about_challenge)
         self.Add_new_one.clicked.connect(self.create_new_one)
+        self.delete_one.clicked.connect(self.delete_challenge)
 
         # добавление в sql таблицу
         self.load_challenges()
 
     def load_challenges(self):
-        path = PurePath('db/challenges.db')
-        connection = sqlite3.connect(path)
-        cursor = connection.cursor()
+        # загрузка всех челленджей из скльюэль в тривиджет
+        cursor = self.connection.cursor()
         cursor.execute('SELECT challenge_lable, duration, completed FROM challenges')
         for i in cursor.fetchall():
             res = QTreeWidgetItem(i)
@@ -38,46 +38,71 @@ class main_window_class(QMainWindow):
         msg_box = QMessageBox()
         msg_box.setWindowTitle(title)
         msg_box.setText(message)
+        msg_box.setIcon(QMessageBox.Icon.Critical)  # Устанавливаем иконку критической ошибки
+        msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
+        msg_box.exec()
 
-    def run(self, item, column):
-        self.dayswindow_class_ex.open_info(item.text(0), column)
+    def show_info_about_challenge(self, item, column):
+        # метод для открытия информции о челлендже
+        # создает новый экземпляр класса и передает туда информцию о челлендже с помощью json-файла
+        self.DWC = dayswindow_class(item.text(0), column)
+        self.DWC.show()
 
     def create_new_one(self):
-        self.add_new_one_class_ex.new_challenge_added.connect(self.updater)  # Подключение сигнала
+        self.add_new_one_class_ex.new_challenge_added.connect(self.updater)
         self.add_new_one_class_ex.show()
 
     def updater(self):
+        # очистка тривиджета для добавление новой информации после добавления
         self.treeWidget.clear()
         self.load_challenges()
+    def delete_challenge(self):
+        #ДОБАВИТЬ УДАЛЕНИЕ ЭЛЕМЕНТОВ
+
+        try:
+            item = self.treeWidget.selectedItems()[0].text(0)
+            valid = QMessageBox.question(self, '', f'Действительно удалить элемент с названием {item}',
+                                         buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            if valid == QMessageBox.StandardButton.Yes:
+                cursor = self.connection.cursor()
+                cursor.execute("""DELETE FROM challenges WHERE challenge_lable=?""", (item,))
+                self.connection.commit()
+                self.updater()
+        except IndexError:
+            self.show_error_message('error', 'Выберите челлендж из списка')
+
 
 
 class dayswindow_class(QMainWindow):
-    def __init__(self):
+    def __init__(self, name, column):
         super().__init__()
         uic.loadUi('forms/days_challenger.ui', self)
-        self.treeWidget.clicked.connect(self.open_info)
+        self.tableWidget.clicked.connect(self.load_completed)
+        self.name = name
+        self.column = column
+        self.load_info_about_challenge()
 
-    def open_info(self, item, column):
-        self.load_info_about_challenge(item, column)
-
-    def load_info_about_challenge(self, name, column):
-        path = PurePath(f'data/json_files/{name}.json')
+    def load_info_about_challenge(self):
+        path = PurePath(f'data/json_files/{self.name}.json')
         with open(path, mode='r') as in_json_f:
+
+            #ПОПРОБОВАТЬ ДОБАВИТЬ ВЫБОР ВМЕСТО ТЕКСТА
+            #НАПИСАТЬ СОХРАНЕНИЕ
             self.show()
             json_data_about_challenge = [json.load(in_json_f)]
+            self.tableWidget.setRowCount(len(*json_data_about_challenge))
             for i in json_data_about_challenge:
-                for k, v in i.items():
+                for row, (k, v) in enumerate(i.items()):
                     info_about_class = [k]
                     info_about_class.extend(v)
-                    res = QTreeWidgetItem(info_about_class)
-                    self.treeWidget.insertTopLevelItem(0, res)
+                    print(info_about_class)
+                    for col, val in enumerate(info_about_class):
+                        res = QTableWidgetItem(val)
+                        print(row, col, val)
+                        self.tableWidget.setItem(row, col, res)
 
-    def cleaning(self):
-        self.treeWidget.clear()
-
-
-
-
+    def load_completed(self):
+        pass
 
 
 

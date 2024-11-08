@@ -64,7 +64,7 @@ def add_new_one_challenge_func(title, duration, self, complited='0'):
     with open(PurePath(f'data/json_files/{title}.json'), mode='w') as new_json:
         competed = {i: [] for i in range(1, int(duration) + 1)}
         for i, v in enumerate(competed.values()):
-            v.extend([(day_today + dt.timedelta(days=int(i))).strftime("%B %d, %Y"), 'X'])
+            v.extend([(day_today + dt.timedelta(days=int(i))).strftime("%B %d, %Y"), 'X', ''])
         json.dump(competed, new_json)
 
     # Добавляем нового пользователя

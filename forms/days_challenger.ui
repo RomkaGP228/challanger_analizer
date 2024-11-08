@@ -18,7 +18,7 @@
     <item>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <widget class="QTreeWidget" name="treeWidget">
+       <widget class="QTableWidget" name="tableWidget">
         <column>
          <property name="text">
           <string>Day</string>
@@ -32,6 +32,11 @@
         <column>
          <property name="text">
           <string>Completed</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>Notes</string>
          </property>
         </column>
        </widget>
