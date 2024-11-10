@@ -1,3 +1,4 @@
+import pathlib
 import sqlite3
 from pathlib import PurePath
 from PyQt6 import uic
@@ -67,6 +68,8 @@ class main_window_class(QMainWindow):
                 cursor = self.connection.cursor()
                 cursor.execute("""DELETE FROM challenges WHERE challenge_lable=?""", (item,))
                 self.connection.commit()
+                fil = pathlib.Path(f'data/json_files/{item}.json')
+                fil.unlink()
                 self.updater()
         except IndexError:
             self.show_error_message('error', 'Выберите челлендж из списка')
