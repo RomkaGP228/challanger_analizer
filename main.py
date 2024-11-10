@@ -9,8 +9,8 @@ import asyncio
 async def main():
     funcs.add_new_db()
     app = QApplication(sys.argv)
-    anwex = add_new_one_class()
-    mwex = main_window_class(anwex)
+    anwex = AddNewOneClass()
+    mwex = MainWindowClass(anwex)
     mwex.show()
     sys.exit(app.exec())
 

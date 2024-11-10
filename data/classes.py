@@ -1,15 +1,14 @@
 import pathlib
 import sqlite3
-from pathlib import PurePath
 from PyQt6 import uic
-from PyQt6.QtWidgets import QMainWindow, QDialog, QTreeWidgetItem, QTableWidgetItem, QComboBox
+from PyQt6.QtWidgets import QMainWindow, QDialog, QTreeWidgetItem, QTableWidgetItem, QComboBox, QMessageBox, \
+    QWidgetAction
 import data.functions as funcs
-from PyQt6.QtCore import pyqtSignal, Qt
-from PyQt6.QtWidgets import QMessageBox
+from PyQt6.QtCore import pyqtSignal
 import json
 
 
-class main_window_class(QMainWindow):
+class MainWindowClass(QMainWindow):
     def __init__(self, add_new_one_class_ex):
         super().__init__()
         uic.loadUi('forms/start_window_challenger.ui', self)
@@ -17,7 +16,7 @@ class main_window_class(QMainWindow):
         # тут идет инициализация созданных клонов методов классов
         self.add_new_one_class_ex = add_new_one_class_ex
 
-        self.connection = sqlite3.connect(PurePath('db/challenges.db'))
+        self.connection = sqlite3.connect(pathlib.Path('db/challenges.db').absolute())
 
         # тут идет подключение кнопок
         self.treeWidget.itemDoubleClicked.connect(self.show_info_about_challenge)
@@ -35,18 +34,10 @@ class main_window_class(QMainWindow):
             res = QTreeWidgetItem(i)
             self.treeWidget.insertTopLevelItem(0, res)
 
-    def show_error_message(self, title, message):
-        msg_box = QMessageBox()
-        msg_box.setWindowTitle(title)
-        msg_box.setText(message)
-        msg_box.setIcon(QMessageBox.Icon.Critical)  # Устанавливаем иконку критической ошибки
-        msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
-        msg_box.exec()
-
     def show_info_about_challenge(self, item, column):
         # метод для открытия информции о челлендже
         # создает новый экземпляр класса и передает туда информцию о челлендже с помощью json-файла
-        self.DWC = dayswindow_class(item.text(0), column)
+        self.DWC = DaysWindowClass(item.text(0), column)
         self.DWC.show()
 
     def create_new_one(self):
@@ -57,8 +48,9 @@ class main_window_class(QMainWindow):
         # очистка тривиджета для добавление новой информации после добавления
         self.treeWidget.clear()
         self.load_challenges()
+
     def delete_challenge(self):
-        #ДОБАВИТЬ УДАЛЕНИЕ ЭЛЕМЕНТОВ
+        # ДОБАВИТЬ УДАЛЕНИЕ ЭЛЕМЕНТОВ
 
         try:
             item = self.treeWidget.selectedItems()[0].text(0)
@@ -68,26 +60,29 @@ class main_window_class(QMainWindow):
                 cursor = self.connection.cursor()
                 cursor.execute("""DELETE FROM challenges WHERE challenge_lable=?""", (item,))
                 self.connection.commit()
-                fil = pathlib.Path(f'data/json_files/{item}.json')
+                fil = pathlib.Path(f'data/json_files/{item}.json').absolute()
                 fil.unlink()
                 self.updater()
         except IndexError:
-            self.show_error_message('error', 'Выберите челлендж из списка')
+            funcs.show_error_message('error', 'Выберите челлендж из списка')
 
 
-
-class dayswindow_class(QMainWindow):
+class DaysWindowClass(QMainWindow):
     def __init__(self, name, column):
         super().__init__()
         uic.loadUi('forms/days_challenger.ui', self)
+        # все связаное с таблицей
         self.name = name
         self.column = column
         self.load_info_about_challenge()
+        # добавляем и инициализируем кнопочки
         self.pushButton.clicked.connect(self.update_json)
-        self.modified = {}
+        self.self_close.clicked.connect(self.close)
+        # связаное с закрытием и тд
+        QWidgetAction(self).triggered.connect(self.closeEvent)
 
     def load_info_about_challenge(self):
-        with open(PurePath(f'data/json_files/{self.name}.json'), mode='r') as in_json_f:
+        with open(pathlib.Path(f'data/json_files/{self.name}.json').absolute(), mode='r') as in_json_f:
             self.show()
             json_data_about_challenge = [json.load(in_json_f)]
             self.tableWidget.setRowCount(len(*json_data_about_challenge))
@@ -107,7 +102,7 @@ class dayswindow_class(QMainWindow):
                             self.tableWidget.setItem(row, col, res)
             in_json_f.close()
 
-    def update_json(self, item):
+    def update_json(self):
         data = {}
         for row in range(self.tableWidget.rowCount()):
             row_data = []
@@ -119,12 +114,21 @@ class dayswindow_class(QMainWindow):
                     item = self.tableWidget.item(row, col)
                     row_data.append(item.text())
             data[row] = row_data[1:]
-            with open(PurePath(f'data/json_files/{self.name}.json'), mode='w') as json_file_to_update:
+            with open(pathlib.Path(f'data/json_files/{self.name}.json').absolute(), mode='w') as json_file_to_update:
                 json.dump(data, json_file_to_update)
                 json_file_to_update.close()
 
+    def closeEvent(self, event):
+        reply = QMessageBox.question(self, 'Подтверждение выхода', 'Вы уверены, что хотите выйти без сохранения?',
+                                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
 
-class add_new_one_class(QDialog):
+        if reply == QMessageBox.StandardButton.Yes:
+            event.accept()  # Закрываем окно
+        else:
+            event.ignore()
+
+
+class AddNewOneClass(QDialog):
     new_challenge_added = pyqtSignal()
 
     def __init__(self):
@@ -132,14 +136,6 @@ class add_new_one_class(QDialog):
         uic.loadUi('forms/creating_window_challenger.ui', self)
         # тут идет подключение кнопок
         self.create_button.clicked.connect(self.adder)
-
-    def show_error_message(self, title, message):
-        msg_box = QMessageBox()
-        msg_box.setWindowTitle(title)
-        msg_box.setText(message)
-        msg_box.setIcon(QMessageBox.Icon.Critical)  # Устанавливаем иконку критической ошибки
-        msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
-        msg_box.exec()
 
     def adder(self):
         a = funcs.add_new_one_challenge_func(self.name_enter.text(), self.duration_enter.text(), self)

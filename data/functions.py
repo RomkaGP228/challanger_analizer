@@ -1,12 +1,12 @@
 import datetime as dt
 import sqlite3
-from pathlib import PurePath
+import pathlib
 import json
 from PyQt6.QtWidgets import QMessageBox
 
 
 def add_new_db():
-    path = PurePath('db/challenges.db')
+    path = pathlib.Path('db/challenges.db').absolute()
     connection = sqlite3.connect(path)
     cursor = connection.cursor()
 
@@ -26,7 +26,7 @@ def add_new_db():
 
 def add_new_one_challenge_func(title, duration, self, complited='0'):
     # подключение БД
-    path = PurePath('db/challenges.db')
+    path = pathlib.Path('db/challenges.db').absolute()
     connection = sqlite3.connect(path)
     cursor = connection.cursor()
 
@@ -39,7 +39,7 @@ def add_new_one_challenge_func(title, duration, self, complited='0'):
             if len([*filter(lambda x: title == x[0], db_data)]) > 0:
                 raise ValueError('Челлендж с таким именем уже существует')
     except ValueError as e:
-        self.show_error_message('error', f'{e}')
+        show_error_message('error', f'{e}')
         return False
 
     # исключаем пробел
@@ -47,7 +47,7 @@ def add_new_one_challenge_func(title, duration, self, complited='0'):
         if title == '':
             raise ValueError('Введите что-либо в поле названия')
     except ValueError as e:
-        self.show_error_message('error', f'{e}')
+        show_error_message('error', f'{e}')
         return False
 
     # исключение если длительность не число
@@ -61,7 +61,7 @@ def add_new_one_challenge_func(title, duration, self, complited='0'):
     # тут идет создание json файла с названием самого челленджа
     day_today = dt.date.today()
     day_of_the_end = day_today + dt.timedelta(days=int(duration))
-    with open(PurePath(f'data/json_files/{title}.json'), mode='w') as new_json:
+    with open(pathlib.Path(f'data/json_files/{title}.json').absolute(), mode='w') as new_json:
         competed = {i: [] for i in range(1, int(duration) + 1)}
         for i, v in enumerate(competed.values()):
             v.extend([(day_today + dt.timedelta(days=int(i))).strftime("%B %d, %Y"), 'X', ''])
@@ -69,8 +69,10 @@ def add_new_one_challenge_func(title, duration, self, complited='0'):
         new_json.close()
 
     # Добавляем нового пользователя
-    cursor.execute('INSERT INTO challenges (challenge_lable, datefrom, dateto, duration, completed, info) VALUES (?, ?, ?, ?, ?, ?)',
-                   (title, day_today, day_of_the_end, duration, complited, f'{title}.json'))
+    cursor.execute(
+        'INSERT INTO challenges (challenge_lable, datefrom, dateto, duration, completed, info) '
+        'VALUES (?, ?, ?, ?, ?, ?)',
+        (title, day_today, day_of_the_end, duration, complited, f'{title}.json'))
 
     # Сохраняем изменения и закрываем соединение
     connection.commit()
@@ -78,3 +80,10 @@ def add_new_one_challenge_func(title, duration, self, complited='0'):
     return True
 
 
+def show_error_message(title, message):
+    msg_box = QMessageBox()
+    msg_box.setWindowTitle(title)
+    msg_box.setText(message)
+    msg_box.setIcon(QMessageBox.Icon.Critical)  # Устанавливаем иконку критической ошибки
+    msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
+    msg_box.exec()
