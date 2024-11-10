@@ -66,6 +66,7 @@ def add_new_one_challenge_func(title, duration, self, complited='0'):
         for i, v in enumerate(competed.values()):
             v.extend([(day_today + dt.timedelta(days=int(i))).strftime("%B %d, %Y"), 'X', ''])
         json.dump(competed, new_json)
+        new_json.close()
 
     # Добавляем нового пользователя
     cursor.execute('INSERT INTO challenges (challenge_lable, datefrom, dateto, duration, completed, info) VALUES (?, ?, ?, ?, ?, ?)',

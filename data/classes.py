@@ -1,9 +1,9 @@
 import sqlite3
 from pathlib import PurePath
 from PyQt6 import uic
-from PyQt6.QtWidgets import QMainWindow, QDialog, QTreeWidgetItem, QTableWidgetItem
+from PyQt6.QtWidgets import QMainWindow, QDialog, QTreeWidgetItem, QTableWidgetItem, QComboBox
 import data.functions as funcs
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtWidgets import QMessageBox
 import json
 
@@ -77,17 +77,14 @@ class dayswindow_class(QMainWindow):
     def __init__(self, name, column):
         super().__init__()
         uic.loadUi('forms/days_challenger.ui', self)
-        self.tableWidget.clicked.connect(self.load_completed)
         self.name = name
         self.column = column
         self.load_info_about_challenge()
+        self.pushButton.clicked.connect(self.update_json)
+        self.modified = {}
 
     def load_info_about_challenge(self):
-        path = PurePath(f'data/json_files/{self.name}.json')
-        with open(path, mode='r') as in_json_f:
-
-            #ПОПРОБОВАТЬ ДОБАВИТЬ ВЫБОР ВМЕСТО ТЕКСТА
-            #НАПИСАТЬ СОХРАНЕНИЕ
+        with open(PurePath(f'data/json_files/{self.name}.json'), mode='r') as in_json_f:
             self.show()
             json_data_about_challenge = [json.load(in_json_f)]
             self.tableWidget.setRowCount(len(*json_data_about_challenge))
@@ -97,13 +94,31 @@ class dayswindow_class(QMainWindow):
                     info_about_class.extend(v)
                     print(info_about_class)
                     for col, val in enumerate(info_about_class):
-                        res = QTableWidgetItem(val)
-                        print(row, col, val)
-                        self.tableWidget.setItem(row, col, res)
+                        if col == 2:
+                            button = QComboBox()
+                            button.addItems(['X', 'V'])
+                            button.setCurrentText(val)
+                            self.tableWidget.setCellWidget(row, col, button)
+                        else:
+                            res = QTableWidgetItem(val)
+                            self.tableWidget.setItem(row, col, res)
+            in_json_f.close()
 
-    def load_completed(self):
-        pass
-
+    def update_json(self, item):
+        data = {}
+        for row in range(self.tableWidget.rowCount()):
+            row_data = []
+            for col in range(self.tableWidget.columnCount()):
+                if col == 2:
+                    item = self.tableWidget.cellWidget(row, col)
+                    row_data.append(item.currentText())
+                else:
+                    item = self.tableWidget.item(row, col)
+                    row_data.append(item.text())
+            data[row] = row_data[1:]
+            with open(PurePath(f'data/json_files/{self.name}.json'), mode='w') as json_file_to_update:
+                json.dump(data, json_file_to_update)
+                json_file_to_update.close()
 
 
 class add_new_one_class(QDialog):
