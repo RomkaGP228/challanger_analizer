@@ -24,7 +24,7 @@ def add_new_db():
     connection.close()
 
 
-def add_new_one_challenge_func(title, duration, self, complited='0'):
+def add_new_one_challenge_func(title, duration, complited='0'):
     # подключение БД
     path = pathlib.Path('db/challenges.db').absolute()
     connection = sqlite3.connect(path)
@@ -54,8 +54,14 @@ def add_new_one_challenge_func(title, duration, self, complited='0'):
     try:
         if duration.isdigit() is False:
             raise ValueError('Длительность не целочисленное')
+        else:
+            if int(duration) < 1:
+                raise ValueError('Длительность меньше 1')
+            else:
+                if int(duration) > 3650:
+                    raise ValueError('Пожалуйста, введите число меньше 3650')
     except ValueError as e:
-        self.show_error_message('error', f'{e}')
+        show_error_message('error', f'{e}')
         return False
 
     # тут идет создание json файла с названием самого челленджа

@@ -90,7 +90,6 @@ class DaysWindowClass(QMainWindow):
                 for row, (k, v) in enumerate(i.items()):
                     info_about_class = [k]
                     info_about_class.extend(v)
-                    print(info_about_class)
                     for col, val in enumerate(info_about_class):
                         if col == 2:
                             button = QComboBox()
