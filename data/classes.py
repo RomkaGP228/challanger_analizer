@@ -112,7 +112,7 @@ class DaysWindowClass(QMainWindow):
                 else:
                     item = self.tableWidget.item(row, col)
                     row_data.append(item.text())
-            data[row] = row_data[1:]
+            data[row+1] = row_data[1:]
             with open(pathlib.Path(f'data/json_files/{self.name}.json').absolute(), mode='w') as json_file_to_update:
                 json.dump(data, json_file_to_update)
                 json_file_to_update.close()
@@ -137,7 +137,7 @@ class AddNewOneClass(QDialog):
         self.create_button.clicked.connect(self.adder)
 
     def adder(self):
-        a = funcs.add_new_one_challenge_func(self.name_enter.text(), self.duration_enter.text(), self)
+        a = funcs.add_new_one_challenge_func(self.name_enter.text(), self.duration_enter.text())
         if not a:
             return
         self.name_enter.clear()
