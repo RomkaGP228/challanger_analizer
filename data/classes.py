@@ -10,6 +10,7 @@ import json
 
 class MainWindowClass(QMainWindow):
     def __init__(self, add_new_one_class_ex):
+        """Этот класс отвечает за основное окно, где происходит взаимодествие со всеми челленджами"""
         super().__init__()
         uic.loadUi('forms/start_window_challenger.ui', self)
 
@@ -30,17 +31,24 @@ class MainWindowClass(QMainWindow):
         # загрузка всех челленджей из скльюэль в тривиджет
         cursor = self.connection.cursor()
         cursor.execute('SELECT challenge_lable, duration, completed FROM challenges')
-        for i in cursor.fetchall():
-            res = QTreeWidgetItem(i)
+        data = cursor.fetchall()
+        for i in data:
+            with open(f'data/json_files/{i[0]}.json', mode='r') as in_json_f:
+                info_about_completed = len([*filter(lambda v: v[1] == 'V', json.load(in_json_f).values())])
+            in_json_f.close()
+            # i[-1] = str(info_about_completed)
+            res = QTreeWidgetItem([*list(i[0:2]), str(info_about_completed)])
             self.treeWidget.insertTopLevelItem(0, res)
 
     def show_info_about_challenge(self, item, column):
         # метод для открытия информции о челлендже
         # создает новый экземпляр класса и передает туда информцию о челлендже с помощью json-файла
         self.DWC = DaysWindowClass(item.text(0), column)
+        self.DWC.info_challenge_update.connect(self.updater)
         self.DWC.show()
 
     def create_new_one(self):
+        # этот метод отвечает за создание нового челленжа, а конкретно за обновление информации в оснвном окне
         self.add_new_one_class_ex.new_challenge_added.connect(self.updater)
         self.add_new_one_class_ex.show()
 
@@ -50,8 +58,7 @@ class MainWindowClass(QMainWindow):
         self.load_challenges()
 
     def delete_challenge(self):
-        # ДОБАВИТЬ УДАЛЕНИЕ ЭЛЕМЕНТОВ
-
+        # этот метод отвечает за удаление чедденжа из основного окна, sql таблици и json файла с таким именем
         try:
             item = self.treeWidget.selectedItems()[0].text(0)
             valid = QMessageBox.question(self, '', f'Действительно удалить элемент с названием {item}',
@@ -68,7 +75,10 @@ class MainWindowClass(QMainWindow):
 
 
 class DaysWindowClass(QMainWindow):
+    info_challenge_update = pyqtSignal()
+
     def __init__(self, name, column):
+        """Этот класс отвечает за окно с информацией о челлендже."""
         super().__init__()
         uic.loadUi('forms/days_challenger.ui', self)
         # все связаное с таблицей
@@ -77,11 +87,12 @@ class DaysWindowClass(QMainWindow):
         self.load_info_about_challenge()
         # добавляем и инициализируем кнопочки
         self.pushButton.clicked.connect(self.update_json)
-        self.self_close.clicked.connect(self.close)
+        self.self_close.clicked.connect(self.closer)
         # связаное с закрытием и тд
         QWidgetAction(self).triggered.connect(self.closeEvent)
 
     def load_info_about_challenge(self):
+        # Этот метод отвечает за загрузку информации о челлендже из json файла
         with open(pathlib.Path(f'data/json_files/{self.name}.json').absolute(), mode='r') as in_json_f:
             self.show()
             json_data_about_challenge = [json.load(in_json_f)]
@@ -102,6 +113,7 @@ class DaysWindowClass(QMainWindow):
             in_json_f.close()
 
     def update_json(self):
+        # Этот класс отвечает за обновление json файла после внесения изменений пользователем через это окно
         data = {}
         for row in range(self.tableWidget.rowCount()):
             row_data = []
@@ -112,13 +124,15 @@ class DaysWindowClass(QMainWindow):
                 else:
                     item = self.tableWidget.item(row, col)
                     row_data.append(item.text())
-            data[row+1] = row_data[1:]
+            data[row + 1] = row_data[1:]
             with open(pathlib.Path(f'data/json_files/{self.name}.json').absolute(), mode='w') as json_file_to_update:
                 json.dump(data, json_file_to_update)
                 json_file_to_update.close()
+        self.info_challenge_update.emit()
 
     def closeEvent(self, event):
-        reply = QMessageBox.question(self, 'Подтверждение выхода', 'Вы уверены, что хотите выйти без сохранения?',
+        # Этот метод отвечает за диалоговое окно с вопросом, уверен ли пользователь в выходе
+        reply = QMessageBox.question(self, 'Подтверждение выхода', 'Вы уверены, что хотите выйти?',
                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
 
         if reply == QMessageBox.StandardButton.Yes:
@@ -126,17 +140,23 @@ class DaysWindowClass(QMainWindow):
         else:
             event.ignore()
 
+    def closer(self):
+        self.close()
+
 
 class AddNewOneClass(QDialog):
     new_challenge_added = pyqtSignal()
 
     def __init__(self):
+        """Этот класс отвечает за добавление нового челленжа"""
         super().__init__()
         uic.loadUi('forms/creating_window_challenger.ui', self)
         # тут идет подключение кнопок
         self.create_button.clicked.connect(self.adder)
 
     def adder(self):
+        # этот метод отвечает за добавление нового челленжа
+        # он передает информацию в функцию для создания нового челленжа
         a = funcs.add_new_one_challenge_func(self.name_enter.text(), self.duration_enter.text())
         if not a:
             return
