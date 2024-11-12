@@ -33,18 +33,20 @@ class MainWindowClass(QMainWindow):
         cursor.execute('SELECT challenge_lable, duration, completed FROM challenges')
         data = cursor.fetchall()
         for i in data:
-            with open(f'data/json_files/{i[0]}.json', mode='r') as in_json_f:
+            with open(f'json_files/{i[0]}.json', mode='r') as in_json_f:
                 info_about_completed = len([*filter(lambda v: v[1] == 'V', json.load(in_json_f).values())])
             in_json_f.close()
             # i[-1] = str(info_about_completed)
             res = QTreeWidgetItem([*list(i[0:2]), str(info_about_completed)])
             self.treeWidget.insertTopLevelItem(0, res)
+        # self.ask_delete()
 
     def show_info_about_challenge(self, item, column):
         # метод для открытия информции о челлендже
         # создает новый экземпляр класса и передает туда информцию о челлендже с помощью json-файла
         self.DWC = DaysWindowClass(item.text(0), column)
         self.DWC.info_challenge_update.connect(self.updater)
+        self.DWC.info_challenge_update.connect(self.ask_delete)
         self.DWC.show()
 
     def create_new_one(self):
@@ -64,14 +66,23 @@ class MainWindowClass(QMainWindow):
             valid = QMessageBox.question(self, '', f'Действительно удалить элемент с названием {item}',
                                          buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
             if valid == QMessageBox.StandardButton.Yes:
-                cursor = self.connection.cursor()
-                cursor.execute("""DELETE FROM challenges WHERE challenge_lable=?""", (item,))
-                self.connection.commit()
-                fil = pathlib.Path(f'data/json_files/{item}.json').absolute()
-                fil.unlink()
+                funcs.delete_challenge(item)
                 self.updater()
         except IndexError:
             funcs.show_error_message('error', 'Выберите челлендж из списка')
+
+    def ask_delete(self):
+        for row in range(self.treeWidget.topLevelItemCount()):
+            challenge = self.treeWidget.topLevelItem(row)
+            if challenge.text(1) == challenge.text(2):
+                ask = QMessageBox.question(self, 'Вопрос', f"""Не хотите ли вы удалить
+челленж с названием: {challenge.text(0)}""")
+                if ask == QMessageBox.StandardButton.Yes:
+                    # self.delete_challenge(challenge.text(0))
+                    funcs.delete_challenge(challenge.text(0))
+                    self.updater()
+                    self.DWC.close()
+
 
 
 class DaysWindowClass(QMainWindow):
@@ -83,6 +94,7 @@ class DaysWindowClass(QMainWindow):
         uic.loadUi('forms/days_challenger.ui', self)
         # все связаное с таблицей
         self.name = name
+        self.setWindowTitle(self.name)
         self.column = column
         self.load_info_about_challenge()
         # добавляем и инициализируем кнопочки
@@ -93,7 +105,7 @@ class DaysWindowClass(QMainWindow):
 
     def load_info_about_challenge(self):
         # Этот метод отвечает за загрузку информации о челлендже из json файла
-        with open(pathlib.Path(f'data/json_files/{self.name}.json').absolute(), mode='r') as in_json_f:
+        with open(pathlib.Path(f'json_files/{self.name}.json').absolute(), mode='r') as in_json_f:
             self.show()
             json_data_about_challenge = [json.load(in_json_f)]
             self.tableWidget.setRowCount(len(*json_data_about_challenge))
@@ -125,7 +137,7 @@ class DaysWindowClass(QMainWindow):
                     item = self.tableWidget.item(row, col)
                     row_data.append(item.text())
             data[row + 1] = row_data[1:]
-            with open(pathlib.Path(f'data/json_files/{self.name}.json').absolute(), mode='w') as json_file_to_update:
+            with open(pathlib.Path(f'json_files/{self.name}.json').absolute(), mode='w') as json_file_to_update:
                 json.dump(data, json_file_to_update)
                 json_file_to_update.close()
         self.info_challenge_update.emit()

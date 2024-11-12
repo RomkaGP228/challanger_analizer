@@ -33,7 +33,6 @@ def add_new_one_challenge_func(title, duration, complited='0'):
     # исключение с созданным файлы
     cursor.execute('SELECT challenge_lable FROM challenges')
     db_data = cursor.fetchall()
-    print(duration, type(duration))
     try:
         if len(db_data) > 0:
             if len([*filter(lambda x: title == x[0], db_data)]) > 0:
@@ -67,10 +66,10 @@ def add_new_one_challenge_func(title, duration, complited='0'):
     # тут идет создание json файла с названием самого челленджа
     day_today = dt.date.today()
     day_of_the_end = day_today + dt.timedelta(days=int(duration))
-    with open(pathlib.Path(f'data/json_files/{title}.json').absolute(), mode='w') as new_json:
+    with open(pathlib.Path(f'json_files/{title}.json').absolute(), mode='w') as new_json:
         competed = {i: [] for i in range(1, int(duration) + 1)}
         for i, v in enumerate(competed.values()):
-            v.extend([(day_today + dt.timedelta(days=int(i))).strftime("%B %d, %Y"), 'X', ''])
+            v.extend([(day_today + dt.timedelta(days=int(i))).strftime("%d %B, %Y"), 'X', ''])
         json.dump(competed, new_json)
         new_json.close()
 
@@ -93,3 +92,16 @@ def show_error_message(title, message):
     msg_box.setIcon(QMessageBox.Icon.Critical)  # Устанавливаем иконку критической ошибки
     msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
     msg_box.exec()
+
+def show_ask_message(title, message):
+    msg_box = QMessageBox.question(title, message, QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+    msg_box.exec()
+
+
+def delete_challenge(item):
+    connection = sqlite3.connect(pathlib.Path('db/challenges.db').absolute())
+    cursor = connection.cursor()
+    cursor.execute("""DELETE FROM challenges WHERE challenge_lable=?""", (item,))
+    connection.commit()
+    fil = pathlib.Path(f'json_files/{item}.json').absolute()
+    fil.unlink()
