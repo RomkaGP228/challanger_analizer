@@ -2,7 +2,7 @@ import pathlib
 import sqlite3
 from PyQt6 import uic
 from PyQt6.QtWidgets import QMainWindow, QDialog, QTreeWidgetItem, QTableWidgetItem, QComboBox, QMessageBox, \
-    QWidgetAction
+    QWidgetAction, QTextEdit
 import data.functions as funcs
 from PyQt6.QtCore import pyqtSignal
 import json
@@ -101,10 +101,11 @@ class DaysWindowClass(QMainWindow):
         self.self_close.clicked.connect(self.closer)
         # связаное с закрытием и тд
         QWidgetAction(self).triggered.connect(self.closeEvent)
+        self.tableWidget.setColumnWidth(3, 300)
 
     def load_info_about_challenge(self):
         # Этот метод отвечает за загрузку информации о челлендже из json файла
-        with open(pathlib.Path(f'json_files/{self.name}.json').absolute(), mode='r') as in_json_f:
+        with (open(pathlib.Path(f'json_files/{self.name}.json').absolute(), mode='r') as in_json_f):
             self.show()
             json_data_about_challenge = [json.load(in_json_f)]
             self.tableWidget.setRowCount(len(*json_data_about_challenge))
@@ -118,6 +119,10 @@ class DaysWindowClass(QMainWindow):
                             button.addItems(['X', 'V'])
                             button.setCurrentText(val)
                             self.tableWidget.setCellWidget(row, col, button)
+                        elif col == 3:
+                            text_browser = QTextEdit()
+                            text_browser.setText(val)
+                            self.tableWidget.setCellWidget(row, col, text_browser)
                         else:
                             res = QTableWidgetItem(val)
                             self.tableWidget.setItem(row, col, res)
@@ -132,6 +137,9 @@ class DaysWindowClass(QMainWindow):
                 if col == 2:
                     item = self.tableWidget.cellWidget(row, col)
                     row_data.append(item.currentText())
+                elif col == 3:
+                    item = self.tableWidget.cellWidget(row, col)
+                    row_data.append(item.toPlainText())
                 else:
                     item = self.tableWidget.item(row, col)
                     row_data.append(item.text())
