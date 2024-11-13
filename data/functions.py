@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import QMessageBox
 
 
 def add_new_db():
+    # функция, которая создает новую бд, если ее нет, запускается она каждый раз при запуске
     path = pathlib.Path('db/challenges.db').absolute()
     connection = sqlite3.connect(path)
     cursor = connection.cursor()
@@ -25,6 +26,7 @@ def add_new_db():
 
 
 def add_new_one_challenge_func(title, duration, complited='0'):
+    # функция, которая создает новый челлендж, добавляет его в бд и создает файл json
     # подключение БД
     path = pathlib.Path('db/challenges.db').absolute()
     connection = sqlite3.connect(path)
@@ -86,6 +88,7 @@ def add_new_one_challenge_func(title, duration, complited='0'):
 
 
 def show_error_message(title, message):
+    # функция для показа MessageBox с ошибкой
     msg_box = QMessageBox()
     msg_box.setWindowTitle(title)
     msg_box.setText(message)
@@ -93,12 +96,18 @@ def show_error_message(title, message):
     msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
     msg_box.exec()
 
-def show_ask_message(title, message):
-    msg_box = QMessageBox.question(title, message, QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-    msg_box.exec()
+
+def show_ask_message(parent, title, message):
+    # функция, которая показывает Messagebox вопрос
+    msg_box = QMessageBox(parent)
+    msg_box.setWindowTitle(title)
+    msg_box.setText(message)
+    msg_box.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+    return msg_box.exec()
 
 
 def delete_challenge(item):
+    # функция для удления челленжа из базы данных и его json файла
     connection = sqlite3.connect(pathlib.Path('db/challenges.db').absolute())
     cursor = connection.cursor()
     cursor.execute("""DELETE FROM challenges WHERE challenge_lable=?""", (item,))
