@@ -39,7 +39,6 @@ class MainWindowClass(QMainWindow):
             # i[-1] = str(info_about_completed)
             res = QTreeWidgetItem([*list(i[0:2]), str(info_about_completed)])
             self.treeWidget.insertTopLevelItem(0, res)
-        # self.ask_delete()
 
     def show_info_about_challenge(self, item, column):
         # метод для открытия информции о челлендже
@@ -63,8 +62,7 @@ class MainWindowClass(QMainWindow):
         # этот метод отвечает за удаление чедденжа из основного окна, sql таблици и json файла с таким именем
         try:
             item = self.treeWidget.selectedItems()[0].text(0)
-            valid = QMessageBox.question(self, '', f'Действительно удалить элемент с названием {item}',
-                                         buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            valid = funcs.show_ask_message(self, '', f'Действительно удалить элемент с названием {item}')
             if valid == QMessageBox.StandardButton.Yes:
                 funcs.delete_challenge(item)
                 self.updater()
@@ -72,17 +70,18 @@ class MainWindowClass(QMainWindow):
             funcs.show_error_message('error', 'Выберите челлендж из списка')
 
     def ask_delete(self):
+        print('yws')
         for row in range(self.treeWidget.topLevelItemCount()):
             challenge = self.treeWidget.topLevelItem(row)
             if challenge.text(1) == challenge.text(2):
-                ask = QMessageBox.question(self, 'Вопрос', f"""Не хотите ли вы удалить
-челленж с названием: {challenge.text(0)}""")
+                ask = funcs.show_ask_message(self, 'Вопрос', f"""Не хотите ли вы удалить
+челленж с названием: {challenge.text(0)}?\nПричина: Выполнен""")
                 if ask == QMessageBox.StandardButton.Yes:
                     # self.delete_challenge(challenge.text(0))
                     funcs.delete_challenge(challenge.text(0))
                     self.updater()
-                    self.DWC.close()
-
+                    self.DWC.destroy()
+                    break
 
 
 class DaysWindowClass(QMainWindow):
@@ -144,8 +143,7 @@ class DaysWindowClass(QMainWindow):
 
     def closeEvent(self, event):
         # Этот метод отвечает за диалоговое окно с вопросом, уверен ли пользователь в выходе
-        reply = QMessageBox.question(self, 'Подтверждение выхода', 'Вы уверены, что хотите выйти?',
-                                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        reply = funcs.show_ask_message(self, 'Подтверждение выхода', 'Вы уверены, что хотите выйти?')
 
         if reply == QMessageBox.StandardButton.Yes:
             event.accept()  # Закрываем окно
@@ -153,7 +151,7 @@ class DaysWindowClass(QMainWindow):
             event.ignore()
 
     def closer(self):
-        self.close()
+        self.destroy()
 
 
 class AddNewOneClass(QDialog):
