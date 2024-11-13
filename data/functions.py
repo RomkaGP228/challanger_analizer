@@ -53,14 +53,11 @@ def add_new_one_challenge_func(title, duration, complited='0'):
 
     # исключение если длительность не число
     try:
-        if duration.isdigit() is False:
+        if (duration.isdigit() is False) or duration[0] == '0':
             raise ValueError('Длительность не целочисленное')
         else:
-            if int(duration) < 1:
-                raise ValueError('Длительность меньше 1')
-            else:
-                if int(duration) > 3650:
-                    raise ValueError('Пожалуйста, введите число меньше 3650')
+            if int(duration) > 3650:
+                raise ValueError('Пожалуйста, введите число меньше 3650')
     except ValueError as e:
         show_error_message('error', f'{e}')
         return False

@@ -140,6 +140,7 @@ class DaysWindowClass(QMainWindow):
                 json.dump(data, json_file_to_update)
                 json_file_to_update.close()
         self.info_challenge_update.emit()
+        self.destroy()
 
     def closeEvent(self, event):
         # Этот метод отвечает за диалоговое окно с вопросом, уверен ли пользователь в выходе

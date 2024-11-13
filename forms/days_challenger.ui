@@ -26,7 +26,7 @@
         </column>
         <column>
          <property name="text">
-          <string>Date</string>
+          <string>        Date      </string>
          </property>
         </column>
         <column>
