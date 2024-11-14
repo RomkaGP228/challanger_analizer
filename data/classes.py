@@ -70,7 +70,6 @@ class MainWindowClass(QMainWindow):
             funcs.show_error_message('error', 'Выберите челлендж из списка')
 
     def ask_delete(self):
-        print('yws')
         for row in range(self.treeWidget.topLevelItemCount()):
             challenge = self.treeWidget.topLevelItem(row)
             if challenge.text(1) == challenge.text(2):
@@ -100,7 +99,7 @@ class DaysWindowClass(QMainWindow):
         self.pushButton.clicked.connect(self.update_json)
         self.self_close.clicked.connect(self.closer)
         # связаное с закрытием и тд
-        QWidgetAction(self).triggered.connect(self.closeEven)
+        QWidgetAction(self).triggered.connect(self.closeEvent)
         self.tableWidget.setColumnWidth(1, 150)
         self.tableWidget.setColumnWidth(3, 300)
 
