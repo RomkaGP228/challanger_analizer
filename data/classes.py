@@ -100,7 +100,8 @@ class DaysWindowClass(QMainWindow):
         self.pushButton.clicked.connect(self.update_json)
         self.self_close.clicked.connect(self.closer)
         # связаное с закрытием и тд
-        QWidgetAction(self).triggered.connect(self.closeEvent)
+        QWidgetAction(self).triggered.connect(self.closeEven)
+        self.tableWidget.setColumnWidth(1, 150)
         self.tableWidget.setColumnWidth(3, 300)
 
     def load_info_about_challenge(self):
@@ -172,6 +173,7 @@ class AddNewOneClass(QDialog):
         uic.loadUi('forms/creating_window_challenger.ui', self)
         # тут идет подключение кнопок
         self.create_button.clicked.connect(self.adder)
+        self.setWindowTitle('Add New One')
 
     def adder(self):
         # этот метод отвечает за добавление нового челленжа

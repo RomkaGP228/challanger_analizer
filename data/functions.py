@@ -45,7 +45,7 @@ def add_new_one_challenge_func(title, duration, complited='0'):
 
     # исключаем пробел
     try:
-        if title == '':
+        if title == '' or title.isspace():
             raise ValueError('Введите что-либо в поле названия')
     except ValueError as e:
         show_error_message('error', f'{e}')
@@ -56,8 +56,8 @@ def add_new_one_challenge_func(title, duration, complited='0'):
         if (duration.isdigit() is False) or duration[0] == '0':
             raise ValueError('Длительность не целочисленное')
         else:
-            if int(duration) > 3650:
-                raise ValueError('Пожалуйста, введите число меньше 3650')
+            if int(duration) > 1825:
+                raise ValueError('Пожалуйста, введите число меньше 1825')
     except ValueError as e:
         show_error_message('error', f'{e}')
         return False
